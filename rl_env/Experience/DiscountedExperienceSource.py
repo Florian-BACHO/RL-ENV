@@ -5,8 +5,8 @@ class DiscountedExperienceSource(ExperienceSource):
         super(DiscountedExperienceSource, self).__init__(env, agent)
         self.discount_rate = discount_rate
 
-    def do_episod(self):
-        all_exp = super(DiscountedExperienceSource, self).do_episod()
+    def __call__(self):
+        all_exp = super(DiscountedExperienceSource, self).__call__()
         total = 0.
         for it in reversed(all_exp):
             total *= self.discount_rate

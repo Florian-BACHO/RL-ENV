@@ -12,7 +12,7 @@ class ReplayBuffer(Queue):
                 self.get()
             self.put(e)
 
-    def get_sample(self, sample_size):
+    def __call__(self, sample_size):
         indices = random.sample(range(self.qsize()), sample_size)
         batch = [self.queue[i] for i in indices]
 

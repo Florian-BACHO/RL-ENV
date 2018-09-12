@@ -1,4 +1,5 @@
 import gym
+import tensorflow as tf
 import rl_env as rl
 
 if __name__ == "__main__":
@@ -7,6 +8,8 @@ if __name__ == "__main__":
     agent = rl.AbstractAgent()
     experience_source = rl.Experience.DiscountedExperienceSource(env_wrapper, agent)
     replay_buffer = rl.ReplayBuffer(100)
-    learner = rl.BasicLearner(agent, experience_source, replay_buffer)
+    learner = rl.BasicLearner(agent, experience_source, replay_buffer, "logs")
 
-    learner.do_train_episod(3, 3)
+    with tf.Session() as sess:
+        while True:
+            learner(nb_tries=3, nb_replay=3)

@@ -7,13 +7,13 @@ class ExperienceSource:
 
     def _step(self):
         state = self.env.state
-        action = self.agent.action(state)
-        reward = self.env.step(action)
+        action = self.agent(state)
+        reward = self.env(action)
         new_state = self.env.state
 
         return Experience(state, action, reward, new_state)
 
-    def do_episod(self):
+    def __call__(self):
         self.env.reset()
 
         all_exp = []

@@ -6,7 +6,7 @@ class EnvironmentWrapper:
     def reset(self):
         self.state = self.env.reset()
 
-    def step(self, action):
+    def __call__(self, action):
         self.state, reward, done, _ = self.env.step(action)
         if done:
             self.state = None
