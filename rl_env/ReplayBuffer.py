@@ -1,19 +1,16 @@
-from queue import Queue
-import random
+from collections import deque
+import numpy as np
 
-class ReplayBuffer(Queue):
+class ReplayBuffer(deque):
     # maxsize = 0 is infinite replay buffer
-    def __init__(self, maxsize=10000):
-        super(ReplayBuffer, self).__init__(maxsize=maxsize)
-
-    def add_experiences(self, exp):
-        for e in exp:
-            if self.full():
-                self.get()
-            self.put(e)
+    def __init__(self, maxsize=10000, start_size=10000):
+        self.start_size = start_size
+        super(ReplayBuffer, self).__init__(maxlen=maxsize)
 
     def __call__(self, sample_size):
-        indices = random.sample(range(self.qsize()), sample_size)
-        batch = [self.queue[i] for i in indices]
+        size = len(self)
+        if size < self.start_size:
+            return None
+        indices = np.random.choice(size, size if size < sample_size else sample_size, replace=False)
 
-        return batch
+        return [self[i] for i in indices]

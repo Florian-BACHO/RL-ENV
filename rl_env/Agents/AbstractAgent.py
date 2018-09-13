@@ -5,5 +5,8 @@ class AbstractAgent:
     def __call__(self, state):
         return 0
 
-    def train(self, tries_experiences, replay_batch):
+    def train_full_tries(self, tries_experiences):
+        pass
+
+    def train_replay(self, replay_batch):
         pass
