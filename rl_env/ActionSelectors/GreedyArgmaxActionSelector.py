@@ -10,7 +10,7 @@ class GreedyArgmaxActionSelector:
 
     def __call__(self, values):
         if random.random() <= self.epsilon:
-            return np.random.randint(len(values), size=len(values))
+            return np.random.randint(len(values[0]), size=len(values))
         else:
             return np.argmax(values, axis=1)
 

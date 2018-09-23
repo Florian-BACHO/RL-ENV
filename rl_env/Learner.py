@@ -10,7 +10,7 @@ class Learner:
 
         if log_dir:
             self.summary_writer = tf.summary.FileWriter(log_dir)
-            self.reward_tracker = MeanRewardTracker(writer=self.summary_writer, time_step=10)
+            self.reward_tracker = MeanRewardTracker(writer=self.summary_writer, time_step=1)
         else:
             self.summary_writer = None
 
@@ -33,7 +33,9 @@ class Learner:
             while not done:
                 exp = self.exp_src()
                 current_exp.append(exp)
-                done = exp.new_state is None
+
+                done = exp.done
+
                 if self.replay_buf is not None:
                     self.replay_buf.append(exp)
                     replay = self.replay_buf(nb_replay)

@@ -1,7 +1,7 @@
 from .ScalarTracker import *
 import numpy as np
 
-class MeanRewardTracker(ScalarTracker):
+class EpsilonTracker(ScalarTracker):
     def __init__(self, time_step=1, dump=True, writer=None):
         super(MeanRewardTracker, self).__init__("Mean Reward", dump, writer)
 
@@ -19,12 +19,12 @@ class MeanRewardTracker(ScalarTracker):
         return np.mean(all_sum)
 
     def __call__(self, exp):
-        self.x += 1
-
         if self.x % self.time_step == 0:
             mean = self._calc_mean(exp)
 
-            return super(MeanRewardTracker, self).__call__(self.x, mean)
+            super(MeanRewardTracker, self).__call__(self.x, mean)
+
+        self.x += 1
 
     def _dump(self, x, y):
         print("Epoch: %d, Mean reward: %f" % (x, y))

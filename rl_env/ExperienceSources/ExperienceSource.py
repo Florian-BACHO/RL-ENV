@@ -10,10 +10,10 @@ class ExperienceSource:
         state = self.state
         action = self.agent([state])
         new_state, reward, done, _ = self.env.step(action[0])
+        self.env.render()
         if done:
-            new_state = None
             self.state = self.env.reset()
         else:
             self.state = new_state
 
-        return Experience(state, action, reward, new_state)
+        return Experience(state, action, reward, done, new_state)
