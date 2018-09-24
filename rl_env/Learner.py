@@ -1,29 +1,34 @@
 import tensorflow as tf
 from .Trackers import *
+from .ActionSelectors import *
 
 class Learner:
-    def __init__(self, agent, experience_source, replay_buffer=None, log_dir=None):
+    def __init__(self, agent, experience_source, replay_buffer=None, \
+                 reward_tracker=None, loss_tracker=None, epsilon_tracker=None):
         self.agent = agent
         self.exp_src = experience_source
         self.replay_buf = replay_buffer
         self.all_tries_exp = []
 
-        if log_dir:
-            self.summary_writer = tf.summary.FileWriter(log_dir)
-            self.reward_tracker = MeanRewardTracker(writer=self.summary_writer, time_step=1)
-        else:
-            self.summary_writer = None
+        self.reward_tracker = reward_tracker
+        self.loss_tracker = loss_tracker
+        self.epsilon_tracker = epsilon_tracker
 
-    def __del__(self):
-        if self.summary_writer:
-            self.summary_writer.close()
+        self.epoch = tf.Variable(0)
+        self.inc_epoch = tf.assign(self.epoch, self.epoch + 1)
 
-    def _update_summaries(self):
-        if not self.summary_writer:
-            return
-        self.reward_tracker(self.all_tries_exp)
+    def _update_epoch_summaries(self, epoch, exp, loss):
+        if self.reward_tracker is not None:
+            self.reward_tracker(epoch, exp.reward)
+        if self.loss_tracker is not None and loss is not None:
+            self.loss_tracker(epoch, loss)
+        if self.epsilon_tracker is not None and \
+           type(self.agent.action_selector) is GreedyActionSelector:
+            self.epsilon_tracker(epoch, self.agent.action_selector.epsilon)
 
     def __call__(self, nb_replay, nb_tries=1):
+        session = tf.get_default_session()
+
         self.all_tries_exp = []
 
         for _ in range(nb_tries):
@@ -34,14 +39,18 @@ class Learner:
                 exp = self.exp_src()
                 current_exp.append(exp)
 
+                session.run(self.inc_epoch)
+
                 done = exp.done
+                loss = None
 
                 if self.replay_buf is not None:
                     self.replay_buf.append(exp)
                     replay = self.replay_buf(nb_replay)
-                    self.agent.train_replay(replay)
+                    loss = self.agent.train_replay(replay)
+
+                self._update_epoch_summaries(session.run(self.epoch), exp, loss)
 
             self.all_tries_exp.append(current_exp)
 
         self.agent.train_full_tries(self.all_tries_exp)
-        self._update_summaries()

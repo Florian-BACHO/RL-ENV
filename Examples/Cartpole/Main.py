@@ -1,4 +1,6 @@
 import tensorflow as tf
+import sys
+sys.path.insert(0, '../..')
 import rl_env as rl
 from CartpoleWrapper import *
 from DQNAnn import *
@@ -22,19 +24,29 @@ TARGET_UPDATE_RATE = 500 # Update target network each x training step
 
 TRY_PER_EPOCH = 10
 
+LOG_DIR = "logs"
+
 if __name__ == "__main__":
-#    env = rl.EnvironmentWrappers.CumulateEnvWrapper(gym.make("CartPole-v0"))
     env = CartpoleWrapper()
 
     ann = DQNAnn(NB_ENTRY, NB_HIDDENS, NB_OUT, "main_network")
     target = DQNAnn(NB_ENTRY, NB_HIDDENS, NB_OUT, "target_network")
-    action_selector = rl.ActionSelectors.GreedyArgmaxActionSelector(EPSILON_START, EPSILON_FINAL, EPSILON_DECAY)
-    agent = rl.Agents.DQNAgent(ann, target, action_selector, LEARNING_RATE, DISCOUNT_RATE, \
+    argmax_selector = rl.ActionSelectors.ArgmaxActionSelector()
+    greedy_selector = rl.ActionSelectors.GreedyActionSelector(argmax_selector, EPSILON_START, \
+                                                              EPSILON_FINAL, EPSILON_DECAY)
+    agent = rl.Agents.DQNAgent(ann, target, greedy_selector, LEARNING_RATE, DISCOUNT_RATE, \
                                TARGET_UPDATE_RATE)
 
     experience_source = rl.ExperienceSources.ExperienceSource(env, agent)
     replay_buffer = rl.ReplayBuffer(REPLAY_SIZE, REPLAY_START_SIZE)
-    learner = rl.Learner(agent, experience_source, replay_buffer, "logs")
+
+    summary_writer = tf.summary.FileWriter(LOG_DIR)
+    reward_tracker = rl.Trackers.ScalarTracker("Reward", False, summary_writer)
+    loss_tracker = rl.Trackers.ScalarTracker("Loss", False, summary_writer)
+    epsilon_tracker = rl.Trackers.ScalarTracker("Epsilon", False, summary_writer)
+
+    learner = rl.Learner(agent, experience_source, replay_buffer, reward_tracker, \
+                         loss_tracker, epsilon_tracker)
 
     init = tf.global_variables_initializer()
 
@@ -42,3 +54,5 @@ if __name__ == "__main__":
         sess.run(init)
         while True:
             learner(nb_replay=REPLAY_BATCH_SIZE)
+
+    summary_writer.close()

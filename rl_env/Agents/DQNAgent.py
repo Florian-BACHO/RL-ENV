@@ -16,10 +16,10 @@ class DQNAgent(AbstractAgent):
         self.actions = tf.placeholder(tf.int32, [None, 2])
         actions_tensors = tf.gather_nd(self.main_ann.output, self.actions)
 
-        loss = tf.losses.mean_squared_error(labels=self.expected_values, predictions=actions_tensors)
+        self.loss = tf.losses.mean_squared_error(labels=self.expected_values, predictions=actions_tensors)
 
         optimizer = tf.train.AdamOptimizer(learning_rate)
-        self.training_op = optimizer.minimize(loss)
+        self.training_op = optimizer.minimize(self.loss)
 
     def __call__(self, state):
         outputs = self.main_ann(state)
@@ -49,11 +49,14 @@ class DQNAgent(AbstractAgent):
 
         session = tf.get_default_session()
 
-        session.run(self.training_op, feed_dict = {self.main_ann.input: states, \
-                                                   self.expected_values: qvalues, \
-                                                   self.actions: actions_indices})
+        loss, _  = session.run([self.loss, self.training_op], \
+                               feed_dict = {self.main_ann.input: states, \
+                                            self.expected_values: qvalues, \
+                                            self.actions: actions_indices})
 
         self.target_update_counter += 1
         if self.target_update_counter >= self.target_update_rate:
             self.target_ann.assign(self.main_ann)
             self.target_update_counter = 0
+
+        return loss

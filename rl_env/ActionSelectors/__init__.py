@@ -1,4 +1,4 @@
 from .ArgmaxActionSelector import *
-from .GreedyArgmaxActionSelector import *
+from .GreedyActionSelector import *
 
-__all__ = ["ArgmaxActionSelector", "GreedyArgmaxActionSelector"]
+__all__ = ["ArgmaxActionSelector", "GreedyActionSelector"]
