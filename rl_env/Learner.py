@@ -17,14 +17,16 @@ class Learner:
         self.epoch = tf.Variable(0)
         self.inc_epoch = tf.assign(self.epoch, self.epoch + 1)
 
-    def _update_epoch_summaries(self, epoch, exp, loss):
+    def _update_epoch_summaries(self, session, epoch, exp, loss):
+        ep = session.run(epoch)
         if self.reward_tracker is not None:
-            self.reward_tracker(epoch, exp.reward)
+            self.reward_tracker(ep, exp.reward)
         if self.loss_tracker is not None and loss is not None:
-            self.loss_tracker(epoch, loss)
+            self.loss_tracker(ep, loss)
         if self.epsilon_tracker is not None and \
            type(self.agent.action_selector) is GreedyActionSelector:
-            self.epsilon_tracker(epoch, self.agent.action_selector.epsilon)
+            epsilon = session.run(self.agent.action_selector.epsilon)
+            self.epsilon_tracker(ep, epsilon)
 
     def __call__(self, nb_replay, nb_tries=1):
         session = tf.get_default_session()
@@ -49,7 +51,7 @@ class Learner:
                     replay = self.replay_buf(nb_replay)
                     loss = self.agent.train_replay(replay)
 
-                self._update_epoch_summaries(session.run(self.epoch), exp, loss)
+                self._update_epoch_summaries(session, self.epoch, exp, loss)
 
             self.all_tries_exp.append(current_exp)
 

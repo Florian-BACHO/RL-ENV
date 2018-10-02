@@ -1,6 +1,6 @@
 import tensorflow as tf
 import sys
-sys.path.insert(0, '../..')
+sys.path.insert(0, '../../../')
 import rl_env as rl
 from CartpoleWrapper import *
 from DQNAnn import *

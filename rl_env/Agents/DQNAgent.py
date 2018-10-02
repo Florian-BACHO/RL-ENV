@@ -9,7 +9,10 @@ class DQNAgent(AbstractAgent):
         self.action_selector = action_selector
         self.discount_rate = discount_rate
         self.target_update_rate = target_update_rate
-        self.target_update_counter = 0
+        self.target_update_counter = tf.Variable(0)
+        self.incr_target_counter = tf.assign(self.target_update_counter, \
+                                             self.target_update_counter + 1)
+        self.reset_target_counter = tf.assign(self.target_update_counter, 0)
 
         self.expected_values = tf.placeholder(tf.float32, [None])
 
@@ -49,14 +52,17 @@ class DQNAgent(AbstractAgent):
 
         session = tf.get_default_session()
 
-        loss, _  = session.run([self.loss, self.training_op], \
+        target_counter, loss, _  = session.run([self.target_update_counter, \
+                                                self.loss, \
+                                                self.training_op], \
                                feed_dict = {self.main_ann.input: states, \
                                             self.expected_values: qvalues, \
                                             self.actions: actions_indices})
 
-        self.target_update_counter += 1
-        if self.target_update_counter >= self.target_update_rate:
+        if target_counter >= self.target_update_rate:
             self.target_ann.assign(self.main_ann)
-            self.target_update_counter = 0
+            session.run(self.reset_target_counter)
+        else:
+            session.run(self.incr_target_counter)
 
         return loss

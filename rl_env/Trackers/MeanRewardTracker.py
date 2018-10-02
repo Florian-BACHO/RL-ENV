@@ -1,11 +1,13 @@
 from .ScalarTracker import *
+import tensorflow as tf
 import numpy as np
 
 class MeanRewardTracker(ScalarTracker):
     def __init__(self, time_step=1, dump=True, writer=None):
         super(MeanRewardTracker, self).__init__("Mean Reward", dump, writer)
 
-        self.x = 0
+        self.x = tf.Variable(0)
+        self.incrX = tf.assign(self.x, self.x + 1)
         self.time_step = time_step
 
     def _convert_exp_to_rewards(self, try_exp):
@@ -19,12 +21,15 @@ class MeanRewardTracker(ScalarTracker):
         return np.mean(all_sum)
 
     def __call__(self, exp):
-        self.x += 1
+        session = tf.get_default_session()
+        x = session.run(x)
 
-        if self.x % self.time_step == 0:
+        if x % self.time_step == 0:
             mean = self._calc_mean(exp)
 
-            return super(MeanRewardTracker, self).__call__(self.x, mean)
+            super(MeanRewardTracker, self).__call__(x, mean)
+
+        session.run(self.incrX)
 
     def _dump(self, x, y):
         print("Epoch: %d, Mean reward: %f" % (x, y))
